@@ -198,8 +198,20 @@ class KafkaProtocol(object):
         message += struct.pack('>hii', acks, timeout, len(grouped_payloads))
 
         for topic, topic_payloads in grouped_payloads.items():
-            message += struct.pack('>h%dsi' % len(topic),
-                                   len(topic), topic, len(topic_payloads))
+            log.debug('Will attempt to pack a struct with the following values: '
+                    'len(topic)=%s, len(topic)=%s, topic=%s, len(topic_payloads)=%s',
+                     len(topic), len(topic), topic, len(topic_payloads))
+            try:
+                message += struct.pack('>h%dsi' % len(topic),
+                                       len(topic), topic, len(topic_payloads))
+            except:
+                log.exception('Ran into a problem while trying to pack a struct. Argument values '
+                        'are: len(topic)=%d, len(topic)=%s, topic=%s, len(topic_payloads)=%s',
+                        len(topic), len(topic), topic, len(topic_payloads))
+                raise
+            log.debug('Successfully packed a struct with the following values: '
+                    'len(topic)=%s, len(topic)=%s, topic=%s, len(topic_payloads)=%s',
+                     len(topic), len(topic), topic, len(topic_payloads))
 
             for partition, payload in topic_payloads.items():
                 msg_set = KafkaProtocol._encode_message_set(payload.messages)
